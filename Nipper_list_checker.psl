@@ -1,0 +1,42 @@
+# Измени на папку с Nipper
+$Folder = "путь_до_папки\Nipper"
+
+
+
+# Скрипт для ниппера.
+# дёргает .txt файлы из inputfolder, проверяет на уязвимости и выдаёт отчёты в outputfolder
+# Перейти в директорию с nipper.exe
+cd $Folder
+
+# Убедиться, что указанные пути верны
+$nipperExecutable = $Folder + "\nipper.exe"
+$inputFolder = $Folder + "\configs"
+$outputFolder = $Folder + "\results"
+
+# Найти все .txt файлы
+$txtFiles = Get-ChildItem -Path $inputFolder -Filter *.txt
+
+if ($txtFiles.Count -eq 0) {
+    Write-Host "Не найдено .txt файлов в папке $inputFolder"
+} else {
+    foreach ($txtFile in $txtFiles) {
+        $fileName = [System.IO.Path]::GetFileNameWithoutExtension($txtFile.Name)
+        $baseName = $fileName.Split("_")[0,1] -join "_"
+        $outputFileName = "$baseName.html"
+        $outputFilePath = Join-Path -Path $outputFolder -ChildPath $outputFileName
+        $nipperCommand = "$nipperExecutable --input=`"$($txtFile.FullName)`" --output=`"$outputFilePath`" --procurve"
+
+        # Вывод информации для отладки
+        Write-Host "Executing command: $nipperCommand"
+
+        # Выполнение команды
+        Invoke-Expression $nipperCommand
+
+        # Проверка, создан ли выходной файл
+        if (Test-Path $outputFilePath) {
+            Write-Host "Файл $outputFileName успешно создан"
+        } else {
+            Write-Host "Ошибка: файл $outputFileName не создан"
+        }
+    }
+}
